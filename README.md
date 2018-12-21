@@ -1,2 +1,2 @@
 # propy
-Simulator of Information Propagation in a Social Network
+Python Simulator of Information Propagation in a Social Network
