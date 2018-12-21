@@ -1,6 +1,6 @@
 import unittest
 from propy.prop import *
-from propy.eventListenerExample import randomly_flag
+from propy.EventListenerExample import randomly_flag
 
 
 class TestProp(unittest.TestCase):
