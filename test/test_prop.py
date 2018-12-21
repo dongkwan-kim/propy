@@ -83,6 +83,40 @@ class TestProp(unittest.TestCase):
             loaded_prop.get_action_matrix("flag_0", time_stamp=2),
         ))
 
+    def test_prop_kwargs(self):
+        g = nu.get_scale_free_graph(n=100, seed=42)
+        prop = NetworkPropagation(g.nodes, g.edges(),
+                                  user_actions=["flag"], num_info=1, propagation=1.0,
+                                  propagation_kwargs={"decay_rate": 0},
+                                  is_verbose=False, seed=42)
+        prop.add_event_listener(
+            event_type="propagate",
+            callback_func=randomly_flag,
+            flag_prob=0.6,
+            seed=42,
+        )
+        prop.simulate_propagation()
+
+        for x, (_, v) in zip(sorted(prop.predecessors(prop.get_roots()[0], feature="follow")),
+                             sorted(prop.get_edges_of_attr("propagate_0").keys(), key=lambda t: t[1])):
+            self.assertEqual(x, v)
+
+        prop = NetworkPropagation(g.nodes, g.edges(),
+                                  user_actions=["flag"], num_info=1, propagation=1.0,
+                                  propagation_kwargs={"max_iter": 1},
+                                  is_verbose=False, seed=42)
+        prop.add_event_listener(
+            event_type="propagate",
+            callback_func=randomly_flag,
+            flag_prob=0.6,
+            seed=42,
+        )
+        prop.simulate_propagation()
+
+        for x, (_, v) in zip(sorted(prop.predecessors(prop.get_roots()[0], feature="follow")),
+                             sorted(prop.get_edges_of_attr("propagate_0").keys(), key=lambda t: t[1])):
+            self.assertEqual(x, v)
+
 
 if __name__ == '__main__':
     unittest.main()

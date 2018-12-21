@@ -17,6 +17,7 @@ class NetworkPropagation(nx.DiGraph):
                  edges: List[Tuple],
                  num_info: int,
                  propagation: Dict[int, List[Tuple]] or float,
+                 propagation_kwargs: Dict = None,
                  user_actions: List[str] = None,
                  is_verbose: bool = True,
                  seed: int = 42,
@@ -37,7 +38,8 @@ class NetworkPropagation(nx.DiGraph):
         for action_key in user_actions:
             self._append_user_actions_with_info(action_key)
 
-        self.info_to_propagation: Dict[int, List[Tuple]] = self._get_info_to_propagation(num_info, propagation)
+        self.info_to_propagation: Dict[int, List[Tuple]] = self._get_info_to_propagation(num_info, propagation,
+                                                                                         **(propagation_kwargs or {}))
         self.info_to_attributes: Dict[int, Dict] = {info: {} for info in self.info_to_propagation.keys()}
         self.event_listeners = defaultdict(list)
 
@@ -47,7 +49,9 @@ class NetworkPropagation(nx.DiGraph):
 
     def _get_info_to_propagation(self,
                                  num_info: int,
-                                 propagation: Dict[int, List[Tuple]] or float) -> Dict[int, List[Tuple]]:
+                                 propagation: Dict[int, List[Tuple]] or float,
+                                 max_iter: int = None,
+                                 decay_rate: float = 1.0) -> Dict[int, List[Tuple]]:
 
         propagation_dict = dict()
 
@@ -55,7 +59,13 @@ class NetworkPropagation(nx.DiGraph):
         if isinstance(propagation, float):
             roots = nu.sample_propagation_roots(self, num_info, seed=self.seed)
             for i, root in enumerate(roots):
-                events = nu.get_propagation_events(self, root, propagation, max_iter=len(self.nodes), seed=self.seed)
+                events = nu.get_propagation_events(
+                    self, root,
+                    propagation_prob=propagation,
+                    max_iter=(max_iter or len(self.nodes)),
+                    decay_rate=decay_rate,
+                    seed=self.seed
+                )
                 propagation_dict[i] = events
 
         # Add edges with propagate
