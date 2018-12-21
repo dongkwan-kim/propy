@@ -134,8 +134,23 @@ class NetworkPropagation(nx.DiGraph):
     def set_info_attr(self, info, attr, val):
         self.info_to_attributes[info][attr] = val
 
-    def get_edge_of_attr(self, attr):
-        return list(nx.get_edge_attributes(self, attr).keys())
+    def get_edges_of_attr(self, attr) -> Dict:
+        return nx.get_edge_attributes(self, attr)
+
+    def get_nodes_of_attr(self, attr) -> Dict:
+        return nx.get_node_attributes(self, attr)
+
+    def set_attr_of_edge(self, edge: Tuple, attr, val):
+        nx.set_edge_attributes(self, {edge: val}, name=attr)
+
+    def set_attr_of_node(self, node, attr, val):
+        nx.set_node_attributes(self, {node: val}, name=attr)
+
+    def set_attr_of_edges(self, edge_to_val: Dict, attr):
+        nx.set_edge_attributes(self, edge_to_val, name=attr)
+
+    def set_attr_of_nodes(self, node_to_val: Dict, attr):
+        nx.set_node_attributes(self, node_to_val, name=attr)
 
     # Event Listener Methods
 
