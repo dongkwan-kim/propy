@@ -71,6 +71,9 @@ class NetworkPropagation(nx.DiGraph):
     def __repr__(self):
         return self.get_title()
 
+    def __getitem__(self, item):
+        return self.info_to_propagation[item]
+
     # Data Methods
 
     def get_action_matrix(self, action_key: str, time_stamp: int or float = None, is_binary_repr=False) -> np.ndarray:
@@ -183,6 +186,9 @@ class NetworkPropagation(nx.DiGraph):
             "seed": self.seed,
         }
         return "_".join(["{}_{}".format(k, v) for k, v in key_attributes.items()])
+
+    def get_num_info(self):
+        return len(self.info_to_propagation)
 
     def pprint_propagation(self):
         pprint(self.info_to_propagation)
