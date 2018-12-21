@@ -10,7 +10,7 @@ def get_scale_free_graph(n, seed, force_save=True, **kwargs) -> nx.DiGraph:
     path = "scale_free_n{}_{}.gpickle".format(n, kwargs)
     if force_save:
         g = nx.DiGraph(nx.scale_free_graph(n=n, seed=seed, **kwargs))
-        g.remove_edges_from(g.selfloop_edges())
+        g.remove_edges_from(nx.selfloop_edges(g))
         setattr(g, "path", path)
         nx.write_gpickle(g, path)
         return g
@@ -19,7 +19,7 @@ def get_scale_free_graph(n, seed, force_save=True, **kwargs) -> nx.DiGraph:
         print("Load: {}".format(path))
     except FileNotFoundError:
         g = nx.DiGraph(nx.scale_free_graph(n=n, seed=seed, **kwargs))
-        g.remove_edges_from(g.selfloop_edges())
+        g.remove_edges_from(nx.selfloop_edges(g))
         setattr(g, "path", path)
         nx.write_gpickle(g, os.path.join(".", path))
         print("Dump: {}".format(path))
