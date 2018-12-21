@@ -8,7 +8,8 @@ class TestProp(unittest.TestCase):
     def test_prop(self):
         g = nu.get_scale_free_graph(n=5, seed=42)
         prop = NetworkPropagation(g.nodes, g.edges(),
-                                  user_actions=["flag"], num_info=1, propagation=0.3, seed=42)
+                                  user_actions=["flag"], num_info=1, propagation=0.3,
+                                  is_verbose=False, seed=42)
         prop.add_event_listener(
             event_type="propagate",
             callback_func=randomly_flag,

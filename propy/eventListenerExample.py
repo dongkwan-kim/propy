@@ -20,6 +20,7 @@ def randomly_flag(network_propagation: NetworkPropagation, event: Tuple, info: i
             network_propagation.add_action(node_id, follower_id, f"flag_{info}", current_time)
             flag_users.append(follower_id)
 
-    print("Info: {} at time {}, Exposed: {}, Flagged: {} by {}".format(
-        info, current_time, exposed, flagged, flag_users
-    ))
+    if network_propagation.is_verbose:
+        print("Info: {} at time {}, Exposed: {}, Flagged: {} by {}".format(
+            info, current_time, exposed, flagged, flag_users
+        ))

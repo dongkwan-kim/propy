@@ -18,6 +18,7 @@ class NetworkPropagation(nx.DiGraph):
                  num_info: int,
                  propagation: Dict[int, List[Tuple]] or float,
                  user_actions: List[str] = None,
+                 is_verbose: bool = True,
                  seed: int = 42,
                  **attr):
 
@@ -28,6 +29,7 @@ class NetworkPropagation(nx.DiGraph):
         self.add_edges_from(edges, follow=1)
 
         self.num_info = num_info
+        self.is_verbose = is_verbose
 
         self.user_actions, user_actions = [], user_actions if user_actions else []
         self.user_actions.append("follow")
