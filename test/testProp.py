@@ -25,6 +25,7 @@ def randomly_flag(network_propagation: NetworkPropagation, event: Tuple, info: i
 
 
 if __name__ == '__main__':
+
     g = nu.get_scale_free_graph(n=5, seed=42)
     prop = NetworkPropagation(g.nodes, g.edges(),
                               user_actions=["flag"], num_info=1, propagation=0.3, seed=42)
@@ -39,8 +40,11 @@ if __name__ == '__main__':
     print(prop.get_roots())
     print(prop.get_action_matrix("follow"))
     print(prop.get_action_matrix("propagate_0"))
-    print(prop.get_action_matrix("flag_0", time_stamp=2))
     print(prop.get_action_matrix("flag_0"))
-    print(prop.get_edge_of_attr("propagate_0"))
-    prop.pprint_propagation()
+    print(dict(prop.adjacency()))
     prop.draw_graph()
+    prop.dump("test")
+
+    loaded_prop = NetworkPropagation.load("test")
+    loaded_prop.draw_graph()
+    print(dict(loaded_prop.adjacency()))

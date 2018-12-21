@@ -2,10 +2,12 @@ from collections import defaultdict
 
 import networkx as nx
 import numpy as np
+from termcolor import cprint
 import propy.NetworkUtil as nu
 
 from typing import List, Tuple, Dict, Sequence, Callable
 from pprint import pprint
+import os
 
 
 class NetworkPropagation(nx.DiGraph):
@@ -81,6 +83,25 @@ class NetworkPropagation(nx.DiGraph):
         else:
             return action_matrix
 
+    def dump(self, file_prefix, path=None):
+        path = path or "."
+        file_path_and_name = os.path.join(path, "{}_{}.pkl".format(file_prefix, self.get_title()))
+        nx.write_gpickle(self, file_path_and_name)
+        cprint("Dump: {}".format(file_path_and_name), "blue")
+
+    @classmethod
+    def load(cls, file_name_or_prefix, path=None):
+        path = path or "."
+        try:
+            file_path_and_name = os.path.join(path, file_name_or_prefix)
+            loaded: NetworkPropagation = nx.read_gpickle(file_path_and_name)
+        except Exception as e:
+            file_name = [f for f in os.listdir(path) if f.startswith(file_name_or_prefix) and f.endswith(".pkl")][-1]
+            file_path_and_name = os.path.join(path, file_name)
+            loaded: NetworkPropagation = nx.read_gpickle(file_path_and_name)
+        cprint("Load: {}".format(file_path_and_name), "green")
+        return loaded
+
     # Propagation Methods
 
     def get_last_time_of_propagation(self) -> int or float:
@@ -132,6 +153,7 @@ class NetworkPropagation(nx.DiGraph):
             )
 
     # NetworkX Overrides
+
     def predecessors(self, n, feature=None):
         if feature is None:
             return super().predecessors(n)
@@ -162,9 +184,3 @@ class NetworkPropagation(nx.DiGraph):
 
     def pprint_propagation(self):
         pprint(self.info_to_propagation)
-
-
-if __name__ == '__main__':
-    g = nu.get_scale_free_graph(n=10, seed=42)
-    prop = NetworkPropagation(g.nodes, g.edges(), num_info=5, propagation=0.3, seed=42)
-    prop.draw_graph()
