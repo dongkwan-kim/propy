@@ -82,6 +82,9 @@ class NetworkPropagation(nx.DiGraph):
     def __repr__(self):
         return self.get_title()
 
+    def __str__(self):
+        return self.get_title()
+
     def __getitem__(self, item):
         return self.info_to_propagation[item]
 
