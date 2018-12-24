@@ -112,9 +112,15 @@ class NetworkPropagation(nx.DiGraph):
             file_path_and_name = os.path.join(path, file_name_or_prefix)
             loaded: NetworkPropagation = nx.read_gpickle(file_path_and_name)
         except Exception as e:
-            file_name = [f for f in os.listdir(path) if f.startswith(file_name_or_prefix) and f.endswith(".pkl")][-1]
-            file_path_and_name = os.path.join(path, file_name)
-            loaded: NetworkPropagation = nx.read_gpickle(file_path_and_name)
+            file_names_starts_with_prefix = [f for f in os.listdir(path)
+                                             if f.startswith(file_name_or_prefix) and f.endswith(".pkl")]
+            if file_names_starts_with_prefix:
+                file_name = file_names_starts_with_prefix[-1]
+                file_path_and_name = os.path.join(path, file_name)
+                loaded: NetworkPropagation = nx.read_gpickle(file_path_and_name)
+            else:
+                file_path_and_name = "NOT FOUND / {}".format(file_name_or_prefix)
+                loaded = False
         cprint("Load: {}".format(file_path_and_name), "green")
         return loaded
 
