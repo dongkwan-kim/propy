@@ -117,6 +117,22 @@ class TestProp(unittest.TestCase):
                              sorted(prop.get_edges_of_attr("propagate_0").keys(), key=lambda t: t[1])):
             self.assertEqual(x, v)
 
+    def test_prop_default_event_listener(self):
+        g = nu.get_scale_free_graph(n=100, seed=42)
+        prop = NetworkPropagation(g.nodes, g.edges(),
+                                  user_actions=["flag"], num_info=1, propagation=1.0,
+                                  propagation_kwargs={"decay_rate": 0},
+                                  is_verbose=False, seed=42)
+        prop.simulate_propagation()
+        root = prop.get_roots()[0]
+        for x, (k, t) in zip(sorted(prop.predecessors(root, feature="follow") + [root]),
+                             sorted(prop.get_nodes_of_attr("propagate_0").items())):
+            self.assertEqual(x, k)
+            if x != root:
+                self.assertEqual(t, 2)
+            else:
+                self.assertEqual(t, 1)
+
 
 if __name__ == '__main__':
     unittest.main()

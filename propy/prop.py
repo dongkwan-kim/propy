@@ -42,6 +42,7 @@ class NetworkPropagation(nx.DiGraph):
                                                                                          **(propagation_kwargs or {}))
         self.info_to_attributes: Dict[int, Dict] = {info: {} for info in self.info_to_propagation.keys()}
         self.event_listeners = defaultdict(list)
+        self.add_event_listener(event_type="propagate", callback_func=propagate_default_listener)
 
     def _append_user_actions_with_info(self, action_key):
         for info in range(self.num_info):
@@ -217,3 +218,9 @@ class NetworkPropagation(nx.DiGraph):
 
     def pprint_propagation(self):
         pprint(self.info_to_propagation)
+
+
+def propagate_default_listener(network_propagation: NetworkPropagation, event: Tuple, info: int, **kwargs):
+    current_time, parent_id, node_id = event
+    propagate_key = f"propagate_{info}"
+    network_propagation.set_attr_of_node(node_id, attr=propagate_key, val=current_time)
