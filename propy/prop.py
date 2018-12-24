@@ -91,6 +91,12 @@ class NetworkPropagation(nx.DiGraph):
     # Data Methods
 
     def get_action_matrix(self, action_key: str, time_stamp: int or float = None, is_binary_repr=False) -> np.ndarray:
+        """
+        :param action_key: str in self.user_actions
+        :param time_stamp: Remove actions time of which is greater than time_stamp
+        :param is_binary_repr: convert all positive integers to one
+        :return:
+        """
         assert action_key in self.user_actions
 
         action_matrix = nu.to_numpy_matrix(self, weight=action_key, value_for_non_weight_exist=0)
@@ -101,6 +107,73 @@ class NetworkPropagation(nx.DiGraph):
             return (action_matrix != 0).astype(int)
         else:
             return action_matrix
+
+    def get_action_matrix_and_indices(self, action_key: str,
+                                      time_stamp: int or float = None,
+                                      is_binary_repr=False) -> (np.ndarray, np.ndarray):
+        """
+        :param action_key: str in self.user_actions
+        :param time_stamp: Remove actions time of which is greater than time_stamp
+        :param is_binary_repr: convert all positive integers to one
+        :return tuple of matrices and indices
+
+        if indices = [0, 1],
+
+        [[+ + - -]   ->   [[+ +]
+         [+ + - -]         [+ +]]
+         [| |    ]
+         [| |    ]]
+        """
+        ordered_full_nodes = np.asarray(self.nodes())
+        concerned_nodes = set()
+        for u, v in self.get_edges_of_attr(action_key):
+            concerned_nodes.update((u, v))
+        concerned_nodes = sorted(concerned_nodes)
+
+        concerned_indices = [np.where(ordered_full_nodes == node)[0][0] for node in concerned_nodes]
+        action_matrix = self.get_action_matrix(action_key, time_stamp, is_binary_repr)
+
+        return nu.get_matrix_of_selected_nodes(action_matrix, concerned_indices), np.asarray(concerned_indices)
+
+    def get_sequence_of_action_matrices_and_indices(self, action_prefix: str,
+                                                    time_stamp: int or float = None,
+                                                    is_binary_repr=False,
+                                                    is_concerned=True) -> (list, list):
+        """
+        :param action_prefix: prefix of actions in self.user_actions
+        :param time_stamp: Remove actions time of which is greater than time_stamp
+        :param is_binary_repr: convert all positive integers to one
+        :param is_concerned: Boolean flag to only consider participated nodes
+        :return: tuple of sequence of matrices and sequence of indices
+        """
+        sequence_of_action_matrices = []
+        sequence_of_concerned_indices = []
+        for info in self.info_to_propagation.keys():
+            action_key = "{}_{}".format(action_prefix, info)
+            if is_concerned:
+                matrix, indices = self.get_action_matrix_and_indices(
+                    action_key=action_key, time_stamp=time_stamp, is_binary_repr=is_binary_repr
+                )
+            else:
+                matrix = self.get_action_matrix(
+                    action_key=action_key, time_stamp=time_stamp, is_binary_repr=is_binary_repr
+                )
+                indices = np.arange(len(self.nodes()))
+
+            sequence_of_action_matrices.append(matrix)
+            sequence_of_concerned_indices.append(indices)
+
+        return sequence_of_action_matrices, sequence_of_concerned_indices
+
+    def get_sequence_of_info_attr(self, attr, encode_func: Callable = None) -> np.ndarray:
+        """
+        :param attr: attribute of info
+        :param encode_func: function to converts attribute value
+        :return: this is for y sequence for data pair (x, y)
+        """
+        encode_func = encode_func or (lambda x: x)
+        sequence = [encode_func(self.get_info_attr(info, attr)) for info in self.info_to_propagation]
+        return np.asarray(sequence)
 
     def dump(self, file_prefix, path=None):
         path = path or "."

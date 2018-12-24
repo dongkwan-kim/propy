@@ -120,6 +120,12 @@ def draw_graph(g: nx.DiGraph, **kwargs):
     plt.clf()
 
 
+# Supplement network methods
+
+def get_matrix_of_selected_nodes(matrix, selected_indices):
+    return matrix[selected_indices][:, selected_indices]
+
+
 # Overrides NetworkX methods
 
 def to_numpy_matrix(G, nodelist=None, dtype=None, order=None,
