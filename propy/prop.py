@@ -108,11 +108,11 @@ class NetworkPropagation(nx.DiGraph):
         else:
             return action_matrix
 
-    def get_action_matrix_and_indices(self, action_key: str,
-                                      time_stamp: int or float = None,
-                                      is_binary_repr=False) -> (np.ndarray, np.ndarray):
+    def get_action_matrices_and_indices(self, action_keys: List[str],
+                                        time_stamp: int or float = None,
+                                        is_binary_repr=False) -> (np.ndarray, np.ndarray):
         """
-        :param action_key: str in self.user_actions
+        :param action_keys: list of str in self.user_actions
         :param time_stamp: Remove actions time of which is greater than time_stamp
         :param is_binary_repr: convert all positive integers to one
         :return tuple of matrices and indices
@@ -126,44 +126,48 @@ class NetworkPropagation(nx.DiGraph):
         """
         ordered_full_nodes = np.asarray(self.nodes())
         concerned_nodes = set()
-        for u, v in self.get_edges_of_attr(action_key):
-            concerned_nodes.update((u, v))
+        for action_key in action_keys:
+            for u, v in self.get_edges_of_attr(action_key):
+                concerned_nodes.update((u, v))
         concerned_nodes = sorted(concerned_nodes)
 
         concerned_indices = [np.where(ordered_full_nodes == node)[0][0] for node in concerned_nodes]
-        action_matrix = self.get_action_matrix(action_key, time_stamp, is_binary_repr)
 
-        return nu.get_matrix_of_selected_nodes(action_matrix, concerned_indices), np.asarray(concerned_indices)
+        action_matrices = []
+        for action_key in action_keys:
+            action_matrix = self.get_action_matrix(action_key, time_stamp, is_binary_repr)
+            action_matrices.append(nu.get_matrix_of_selected_nodes(action_matrix, concerned_indices))
 
-    def get_sequence_of_action_matrices_and_indices(self, action_prefix: str,
+        return np.asarray(action_matrices), np.asarray(concerned_indices)
+
+    def get_action_matrices_and_indices_of_all_info(self, action_prefixes: List[str],
                                                     time_stamp: int or float = None,
                                                     is_binary_repr=False,
-                                                    is_concerned=True) -> (list, list):
+                                                    is_concerned=True) -> (Sequence, Sequence):
         """
-        :param action_prefix: prefix of actions in self.user_actions
+        :param action_prefixes: list of prefixes of actions in self.user_actions
         :param time_stamp: Remove actions time of which is greater than time_stamp
         :param is_binary_repr: convert all positive integers to one
         :param is_concerned: Boolean flag to only consider participated nodes
-        :return: tuple of sequence of matrices and sequence of indices
+        :return: tuple of sequence of matrices and sequence of indices, shape of which is
+                 (num_info, num_actions, num_selected_nodes, num_selected_nodes). Note that
+                 num_selected_nodes can be different for each element.
         """
-        sequence_of_action_matrices = []
-        sequence_of_concerned_indices = []
+        seq_of_action_matrices = []
+        seq_of_concerned_indices = []
         for info in self.info_to_propagation.keys():
-            action_key = "{}_{}".format(action_prefix, info)
+            action_keys = ["{}_{}".format(action_prefix, info) for action_prefix in action_prefixes]
             if is_concerned:
-                matrix, indices = self.get_action_matrix_and_indices(
-                    action_key=action_key, time_stamp=time_stamp, is_binary_repr=is_binary_repr
+                matrices, indices = self.get_action_matrices_and_indices(
+                    action_keys=action_keys, time_stamp=time_stamp, is_binary_repr=is_binary_repr
                 )
             else:
-                matrix = self.get_action_matrix(
-                    action_key=action_key, time_stamp=time_stamp, is_binary_repr=is_binary_repr
-                )
-                indices = np.arange(len(self.nodes()))
+                raise NotImplementedError
 
-            sequence_of_action_matrices.append(matrix)
-            sequence_of_concerned_indices.append(indices)
+            seq_of_action_matrices.append(matrices)
+            seq_of_concerned_indices.append(indices)
 
-        return sequence_of_action_matrices, sequence_of_concerned_indices
+        return seq_of_action_matrices, seq_of_concerned_indices
 
     def get_sequence_of_info_attr(self, attr, encode_func: Callable = None) -> np.ndarray:
         """
