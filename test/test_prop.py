@@ -1,6 +1,8 @@
 import unittest
 from propy.prop import *
 from propy.EventListenerExample import randomly_flag
+from propy.DataUtil import *
+from propy.DataLoader import *
 
 
 class TestProp(unittest.TestCase):
@@ -132,6 +134,30 @@ class TestProp(unittest.TestCase):
                 self.assertEqual(t, 2)
             else:
                 self.assertEqual(t, 1)
+
+    def test_data_loader(self):
+        actions = ["flag", "propagate"]
+        prop = NetworkPropagation.load("test_num_info_2_nodes_20_edges_45_seed_42.pkl")
+
+        prop.set_info_attr(info=0, attr="is_fake", val=True)
+        prop.set_info_attr(info=1, attr="is_fake", val=False)
+
+        matrices, indices = prop.get_action_matrices_and_indices_of_all_info(actions)
+
+        data_loader = ActionMatrixLoader(path=".", actions=actions)
+        if not data_loader.load("test_loader"):
+            data_loader.set_adj(adj=prop.get_action_matrix("follow"))
+            data_loader.set_xy(
+                matrices=matrices,
+                selected_node_indices=indices,
+                x_features=ones_feature(prop.number_of_nodes(), 5),
+                ys=prop.get_sequence_of_info_attr("is_fake", encode_func=lambda x: np.eye(2)[int(not x)])
+            )
+            data_loader.dump(name_prefix="test_loader")
+
+        mats_1, xs_1, ys_1 = data_loader[1]
+        self.assertTrue(np.array_equal(xs_1, np.asarray([[6, 6, 6, 6, 6], [15, 15, 15, 15, 15]])))
+        self.assertTrue(np.array_equal(ys_1, np.asarray([0, 1])))
 
 
 if __name__ == '__main__':
