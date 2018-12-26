@@ -75,10 +75,6 @@ class ActionMatrixLoader:
         assert self.matrices is not None
         assert len(self.matrices) == len(self.ys)
 
-        # Dump adjacency
-        meta_instance = ActionMatrixLoader(path=self.path, actions=self.actions)
-        dump_batch(instance=meta_instance, path=self.path, name="{}_meta.pkl".format(name_prefix))
-
         # Dump xs, ys
         info_batch_size = int(math.ceil(len(self)/num_dist))
         x_batch_size = int(math.ceil(len(self.x_features)/num_dist))
@@ -100,20 +96,12 @@ class ActionMatrixLoader:
         cprint("Dump: {} with dist {}".format(name_prefix, num_dist), "blue")
 
     def load(self, name_prefix):
+        # Load xs, ys
+        file_names_of_prefix = [f for f in os.listdir(self.path) if f.startswith(name_prefix) and f.endswith(".pkl")]
 
-        # Load adjacency
-        try:
-            with open(os.path.join(self.path, "{}_meta.pkl".format(name_prefix)), 'rb') as f:
-                loaded: ActionMatrixLoader = pickle.load(f)
-                assert loaded.actions == self.actions
-                assert loaded.path == self.path
-        except Exception as e:
-            cprint('Load Failed: {} \n\t{}.\n'.format(name_prefix, e), "red")
+        if not file_names_of_prefix:
             return False
 
-        # Load xs, ys
-        file_names_of_prefix = [f for f in os.listdir(self.path)
-                                if f.startswith(name_prefix) and f.endswith(".pkl") and "meta" not in f]
         for file_name in file_names_of_prefix:
             if not self._load_batch(path=self.path, name=file_name):
                 cprint("Load Failed in Loading {}".format(file_names_of_prefix), "red")
