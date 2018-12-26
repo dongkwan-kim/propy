@@ -150,7 +150,7 @@ class TestProp(unittest.TestCase):
         data_loader = ActionMatrixLoader(path=".", actions=base_action_keys + concerned_action_prefixes)
         if not data_loader.load("test_loader"):
             data_loader.update_matrices_and_indices(
-                matrices=matrices,
+                matrices_sequence=matrices,
                 selected_node_indices=indices,
             )
             data_loader.update_x_features(ones_feature(prop.number_of_nodes(), 5))
@@ -161,7 +161,12 @@ class TestProp(unittest.TestCase):
         mats_1, xs_1, ys_1 = data_loader[1]
         self.assertTrue(np.array_equal(
             mats_1,
-            np.asarray([[[0.0, 1.0], [0.0, 0.0]], [[0.0, 0.0], [1.0, 0.0]], [[0.0, 0.0], [6.0, 0.0]]]),
+            np.asarray([[[0.0, 1.0],
+                         [0.0, 0.0]],
+                        [[0.0, 0.0],
+                         [1.0, 0.0]],
+                        [[0.0, 0.0],
+                         [6.0, 0.0]]]),
         ))
         self.assertEqual(data_loader.actions, ['follow', 'flag', 'propagate'])
         self.assertTrue(np.array_equal(xs_1, np.asarray([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1]])))
