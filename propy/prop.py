@@ -5,7 +5,7 @@ import numpy as np
 from termcolor import cprint
 import propy.NetworkUtil as nu
 
-from typing import List, Tuple, Dict, Sequence, Callable
+from typing import List, Tuple, Dict, Sequence, Callable, Generator
 from pprint import pprint
 import os
 
@@ -148,13 +148,32 @@ class NetworkPropagation(nx.DiGraph):
 
     def get_action_matrices_and_indices_of_all_info(self,
                                                     concerned_action_prefixes: List[str],
-                                                    base_actions_keys: List[str] = None,
+                                                    base_action_keys: List[str] = None,
                                                     time_stamp: int or float = None,
                                                     is_binary_repr=False,
                                                     is_concerned=True) -> (Sequence, Sequence):
         """
+        See self.get_generator_of_action_matrices_and_indices_of_all_info
+        """
+        seq_of_action_matrices, seq_of_concerned_indices = [], []
+        generator_of_action_matrices_and_indices = self.get_generator_of_action_matrices_and_indices_of_all_info(
+            concerned_action_prefixes, base_action_keys, time_stamp, is_binary_repr, is_concerned
+        )
+        for matrices, indices in generator_of_action_matrices_and_indices:
+            seq_of_action_matrices.append(matrices)
+            seq_of_concerned_indices.append(indices)
+
+        return seq_of_action_matrices, seq_of_concerned_indices
+
+    def get_generator_of_action_matrices_and_indices_of_all_info(self,
+                                                                 concerned_action_prefixes: List[str],
+                                                                 base_action_keys: List[str] = None,
+                                                                 time_stamp: int or float = None,
+                                                                 is_binary_repr=False,
+                                                                 is_concerned=True) -> Generator:
+        """
         :param concerned_action_prefixes: list of prefixes of actions in self.user_actions
-        :param base_actions_keys: list of actions that are not prefixes, not be considered in indices calculation
+        :param base_action_keys: list of actions that are not prefixes, not be considered in indices calculation
         :param time_stamp: Remove actions time of which is greater than time_stamp
         :param is_binary_repr: convert all positive integers to one
         :param is_concerned: Boolean flag to only consider participated nodes
@@ -162,25 +181,20 @@ class NetworkPropagation(nx.DiGraph):
                  (num_info, num_actions, num_selected_nodes, num_selected_nodes). Note that
                  num_selected_nodes can be different for each element.
         """
-        base_actions_keys = base_actions_keys or []
-        seq_of_action_matrices = []
-        seq_of_concerned_indices = []
+        base_action_keys = base_action_keys or []
         for info in self.info_to_propagation.keys():
             concerned_action_keys = ["{}_{}".format(action_prefix, info) for action_prefix in concerned_action_prefixes]
             if is_concerned:
                 matrices, indices = self.get_action_matrices_and_indices(
                     concerned_action_keys=concerned_action_keys,
-                    base_action_keys=base_actions_keys,
+                    base_action_keys=base_action_keys,
                     time_stamp=time_stamp,
                     is_binary_repr=is_binary_repr
                 )
             else:
                 raise NotImplementedError
 
-            seq_of_action_matrices.append(matrices)
-            seq_of_concerned_indices.append(indices)
-
-        return seq_of_action_matrices, seq_of_concerned_indices
+            yield matrices, indices
 
     def get_sequence_of_info_attr(self, attr, encode_func: Callable = None) -> np.ndarray:
         """
