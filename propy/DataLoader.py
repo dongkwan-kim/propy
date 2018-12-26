@@ -11,7 +11,7 @@ def dump_batch(instance, path, name):
         pickle.dump(instance, f)
 
 
-def assign_or_append(base_sequence, extra_sequence):
+def assign_or_concat(base_sequence, extra_sequence):
 
     if base_sequence is None:
         return extra_sequence
@@ -19,7 +19,7 @@ def assign_or_append(base_sequence, extra_sequence):
     if isinstance(base_sequence, list):
         return base_sequence + extra_sequence
     elif isinstance(base_sequence, np.ndarray):
-        return np.concatenate(base_sequence, extra_sequence)
+        return np.concatenate((base_sequence, extra_sequence))
     else:
         raise TypeError
 
@@ -61,14 +61,14 @@ class ActionMatrixLoader:
         return self.matrices[item], self.x_features[self.selected_node_indices[item]], self.ys[item]
 
     def update_matrices_and_indices(self, matrices, selected_node_indices):
-        self.matrices = assign_or_append(self.matrices, matrices)
-        self.selected_node_indices = assign_or_append(self.selected_node_indices, selected_node_indices)
+        self.matrices = assign_or_concat(self.matrices, matrices)
+        self.selected_node_indices = assign_or_concat(self.selected_node_indices, selected_node_indices)
 
     def update_x_features(self, x_features):
-        self.x_features = assign_or_append(self.x_features, x_features)
+        self.x_features = assign_or_concat(self.x_features, x_features)
 
     def update_ys(self, ys):
-        self.ys = assign_or_append(self.ys, ys)
+        self.ys = assign_or_concat(self.ys, ys)
 
     def dump(self, name_prefix, num_dist=1):
 
@@ -114,10 +114,10 @@ class ActionMatrixLoader:
         try:
             with open(os.path.join(path, name), 'rb') as f:
                 loaded: ActionMatrixLoader = pickle.load(f)
-                self.matrices = assign_or_append(self.matrices, loaded.matrices)
-                self.selected_node_indices = assign_or_append(self.selected_node_indices, loaded.selected_node_indices)
-                self.x_features = assign_or_append(self.x_features, loaded.x_features)
-                self.ys = assign_or_append(self.ys, loaded.ys)
+                self.matrices = assign_or_concat(self.matrices, loaded.matrices)
+                self.selected_node_indices = assign_or_concat(self.selected_node_indices, loaded.selected_node_indices)
+                self.x_features = assign_or_concat(self.x_features, loaded.x_features)
+                self.ys = assign_or_concat(self.ys, loaded.ys)
             return True
         except Exception as e:
             cprint('Load Failed: {} \n\t{}.\n'.format(os.path.join(path, name), e), "red")
