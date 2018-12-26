@@ -108,11 +108,13 @@ class NetworkPropagation(nx.DiGraph):
         else:
             return action_matrix
 
-    def get_action_matrices_and_indices(self, action_keys: List[str],
+    def get_action_matrices_and_indices(self, concerned_action_keys: List[str],
+                                        base_action_keys: List[str],
                                         time_stamp: int or float = None,
                                         is_binary_repr=False) -> (np.ndarray, np.ndarray):
         """
-        :param action_keys: list of str in self.user_actions
+        :param concerned_action_keys: list of str in self.user_actions
+        :param base_action_keys: list of str in self.user_actions, not be considered in indices calculation
         :param time_stamp: Remove actions time of which is greater than time_stamp
         :param is_binary_repr: convert all positive integers to one
         :return tuple of matrices and indices
@@ -126,26 +128,33 @@ class NetworkPropagation(nx.DiGraph):
         """
         ordered_full_nodes = np.asarray(self.nodes())
         concerned_nodes = set()
-        for action_key in action_keys:
-            for u, v in self.get_edges_of_attr(action_key):
+        for concerned_action_key in concerned_action_keys:
+            for u, v in self.get_edges_of_attr(concerned_action_key):
                 concerned_nodes.update((u, v))
         concerned_nodes = sorted(concerned_nodes)
 
         concerned_indices = [np.where(ordered_full_nodes == node)[0][0] for node in concerned_nodes]
 
         action_matrices = []
-        for action_key in action_keys:
-            action_matrix = self.get_action_matrix(action_key, time_stamp, is_binary_repr)
+        for base_action_key in base_action_keys:
+            action_matrix = self.get_action_matrix(base_action_key, time_stamp, is_binary_repr)
+            action_matrices.append(nu.get_matrix_of_selected_nodes(action_matrix, concerned_indices))
+
+        for concerned_action_key in concerned_action_keys:
+            action_matrix = self.get_action_matrix(concerned_action_key, time_stamp, is_binary_repr)
             action_matrices.append(nu.get_matrix_of_selected_nodes(action_matrix, concerned_indices))
 
         return np.asarray(action_matrices), np.asarray(concerned_indices)
 
-    def get_action_matrices_and_indices_of_all_info(self, action_prefixes: List[str],
+    def get_action_matrices_and_indices_of_all_info(self,
+                                                    concerned_action_prefixes: List[str],
+                                                    base_actions_keys: List[str] = None,
                                                     time_stamp: int or float = None,
                                                     is_binary_repr=False,
                                                     is_concerned=True) -> (Sequence, Sequence):
         """
-        :param action_prefixes: list of prefixes of actions in self.user_actions
+        :param concerned_action_prefixes: list of prefixes of actions in self.user_actions
+        :param base_actions_keys: list of actions that are not prefixes, not be considered in indices calculation
         :param time_stamp: Remove actions time of which is greater than time_stamp
         :param is_binary_repr: convert all positive integers to one
         :param is_concerned: Boolean flag to only consider participated nodes
@@ -153,13 +162,17 @@ class NetworkPropagation(nx.DiGraph):
                  (num_info, num_actions, num_selected_nodes, num_selected_nodes). Note that
                  num_selected_nodes can be different for each element.
         """
+        base_actions_keys = base_actions_keys or []
         seq_of_action_matrices = []
         seq_of_concerned_indices = []
         for info in self.info_to_propagation.keys():
-            action_keys = ["{}_{}".format(action_prefix, info) for action_prefix in action_prefixes]
+            concerned_action_keys = ["{}_{}".format(action_prefix, info) for action_prefix in concerned_action_prefixes]
             if is_concerned:
                 matrices, indices = self.get_action_matrices_and_indices(
-                    action_keys=action_keys, time_stamp=time_stamp, is_binary_repr=is_binary_repr
+                    concerned_action_keys=concerned_action_keys,
+                    base_action_keys=base_actions_keys,
+                    time_stamp=time_stamp,
+                    is_binary_repr=is_binary_repr
                 )
             else:
                 raise NotImplementedError

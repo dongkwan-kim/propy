@@ -136,17 +136,19 @@ class TestProp(unittest.TestCase):
                 self.assertEqual(t, 1)
 
     def test_data_loader(self):
-        actions = ["flag", "propagate"]
+        concerned_action_prefixes = ["flag", "propagate"]
+        base_action_keys = ["follow"]
         prop = NetworkPropagation.load("test_num_info_2_nodes_20_edges_45_seed_42.pkl")
 
         prop.set_info_attr(info=0, attr="is_fake", val=True)
         prop.set_info_attr(info=1, attr="is_fake", val=False)
 
-        matrices, indices = prop.get_action_matrices_and_indices_of_all_info(actions)
+        matrices, indices = prop.get_action_matrices_and_indices_of_all_info(
+            concerned_action_prefixes, base_action_keys,
+        )
 
-        data_loader = ActionMatrixLoader(path=".", actions=actions)
+        data_loader = ActionMatrixLoader(path=".", actions=base_action_keys + concerned_action_prefixes)
         if not data_loader.load("test_loader"):
-            data_loader.set_adj(adj=prop.get_action_matrix("follow"))
             data_loader.set_xy(
                 matrices=matrices,
                 selected_node_indices=indices,
@@ -156,7 +158,12 @@ class TestProp(unittest.TestCase):
             data_loader.dump(name_prefix="test_loader")
 
         mats_1, xs_1, ys_1 = data_loader[1]
-        self.assertTrue(np.array_equal(xs_1, np.asarray([[6, 6, 6, 6, 6], [15, 15, 15, 15, 15]])))
+        self.assertTrue(np.array_equal(
+            mats_1,
+            np.asarray([[[0.0, 1.0], [0.0, 0.0]], [[0.0, 0.0], [1.0, 0.0]], [[0.0, 0.0], [6.0, 0.0]]]),
+        ))
+        self.assertEqual(data_loader.actions, ['follow', 'flag', 'propagate'])
+        self.assertTrue(np.array_equal(xs_1, np.asarray([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1]])))
         self.assertTrue(np.array_equal(ys_1, np.asarray([0, 1])))
 
 

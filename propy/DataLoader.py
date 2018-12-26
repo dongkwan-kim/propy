@@ -34,9 +34,6 @@ class ActionMatrixLoader:
         # (num_info, num_classes)
         self.ys: np.ndarray = None
 
-        # (num_nodes, num_nodes)
-        self.adj: np.ndarray = None
-
     def __len__(self):
         assert len(self.matrices) == len(self.ys)
         return len(self.matrices)
@@ -57,21 +54,13 @@ class ActionMatrixLoader:
         self.x_features = x_features
         self.ys = ys
 
-    def set_adj(self, adj):
-        self.adj = adj
-
-    def get_adj(self):
-        return self.adj
-
     def dump(self, name_prefix, num_dist=1):
 
-        assert self.adj is not None
         assert self.matrices is not None
         assert len(self.matrices) == len(self.ys)
 
         # Dump adjacency
         meta_instance = ActionMatrixLoader(path=self.path, actions=self.actions)
-        meta_instance.set_adj(self.adj)
         dump_batch(instance=meta_instance, path=self.path, name="{}_meta.pkl".format(name_prefix))
 
         # Dump xs, ys
@@ -102,7 +91,6 @@ class ActionMatrixLoader:
                 loaded: ActionMatrixLoader = pickle.load(f)
                 assert loaded.actions == self.actions
                 assert loaded.path == self.path
-                self.set_adj(loaded.adj)
         except Exception as e:
             cprint('Load Failed: {} \n\t{}.\n'.format(name_prefix, e), "red")
             return False
