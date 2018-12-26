@@ -149,12 +149,13 @@ class TestProp(unittest.TestCase):
 
         data_loader = ActionMatrixLoader(path=".", actions=base_action_keys + concerned_action_prefixes)
         if not data_loader.load("test_loader"):
-            data_loader.set_xy(
+            data_loader.update_matrices_and_indices(
                 matrices=matrices,
                 selected_node_indices=indices,
-                x_features=ones_feature(prop.number_of_nodes(), 5),
-                ys=prop.get_sequence_of_info_attr("is_fake", encode_func=lambda x: np.eye(2)[int(not x)])
             )
+            data_loader.update_x_features(ones_feature(prop.number_of_nodes(), 5))
+            data_loader.update_ys(prop.get_sequence_of_info_attr("is_fake",
+                                                                 encode_func=lambda x: np.eye(2)[int(not x)]))
             data_loader.dump(name_prefix="test_loader")
 
         mats_1, xs_1, ys_1 = data_loader[1]
