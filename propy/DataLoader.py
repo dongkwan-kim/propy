@@ -58,10 +58,19 @@ class ActionMatrixLoader:
         :return: shape of 0: (num_actions, num_selected_nodes, num_selected_nodes),
                  shape of 1: (num_selected_nodes, num_features),
                  shape of 2: (num_classes,)
+        TODO: Support slice as an item.
         """
         indices = self.selected_node_indices[item]
         matrices = np.asarray([list_to_matrix(lst, size=len(indices)) for lst in self.matrices_in_list_form[item]])
         return matrices, self.x_features[indices], self.ys[item]
+
+    def get_batch_generator(self, batch_size) -> Generator:
+        data = []
+        for i, datum in enumerate(self):
+            data.append(datum)
+            if (i + 1) % batch_size == 0:
+                yield data
+                data = []
 
     def update_matrices_and_indices(self, matrices_sequence, selected_node_indices, convert_to_list=True):
 
