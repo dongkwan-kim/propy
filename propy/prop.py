@@ -72,8 +72,9 @@ class NetworkPropagation(nx.DiGraph):
         # Add edges with propagate
         propagation_dict = propagation_dict or propagation
         for info, propagation in propagation_dict.items():
-            for t, parent_id, node_id in propagation[1:]:  # Exclude ROOT -> ...
-                self.add_action(parent_id, node_id, f"propagate_{info}", t)
+            for t, parent_id, node_id in propagation[1:]:  # [1:]: Exclude ROOT -> ...
+                # Note that we consider that 'propagate' is a consequence of {node_id}'s action.
+                self.add_action(node_id, parent_id, f"propagate_{info}", t)
 
         return propagation_dict
 
@@ -247,6 +248,12 @@ class NetworkPropagation(nx.DiGraph):
     # Attributes Manipulation Methods
 
     def add_action(self, u, v, action_key, value):
+        """
+        :param u: main node (subject of the action, e.g. "u follows v", "u shares v's", "u flags v's")
+        :param v: sub node
+        :param action_key: attribute key of edges
+        :param value: attribute value of edges
+        """
         self.add_edge(u, v, **{action_key: value})
 
     def get_info_attr(self, info, attr=None):
@@ -336,4 +343,6 @@ class NetworkPropagation(nx.DiGraph):
 def propagate_default_listener(network_propagation: NetworkPropagation, event: Tuple, info: int, **kwargs):
     current_time, parent_id, node_id = event
     propagate_key = f"propagate_{info}"
+
+    # Mark propagate attribute to node
     network_propagation.set_attr_of_node(node_id, attr=propagate_key, val=current_time)

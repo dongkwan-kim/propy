@@ -30,10 +30,10 @@ class TestProp(unittest.TestCase):
         ))
         self.assertTrue(np.array_equal(
             prop.get_action_matrix("propagate_0"),
-            np.asarray([[0.0, 0.0, 3.0, 3.0, 0.0],
-                        [0.0, 0.0, 0.0, 0.0, 0.0],
-                        [0.0, 4.0, 0.0, 0.0, 0.0],
-                        [0.0, 0.0, 0.0, 0.0, 0.0],
+            np.asarray([[0.0, 0.0, 0.0, 0.0, 0.0],
+                        [0.0, 0.0, 4.0, 0.0, 0.0],
+                        [3.0, 0.0, 0.0, 0.0, 0.0],
+                        [3.0, 0.0, 0.0, 0.0, 0.0],
                         [0.0, 0.0, 0.0, 0.0, 0.0]])
         ))
         self.assertTrue(np.array_equal(
@@ -99,9 +99,9 @@ class TestProp(unittest.TestCase):
         )
         prop.simulate_propagation()
 
-        for x, (_, v) in zip(sorted(prop.predecessors(prop.get_roots()[0], feature="follow")),
-                             sorted(prop.get_edges_of_attr("propagate_0").keys(), key=lambda t: t[1])):
-            self.assertEqual(x, v)
+        for x, (u, _) in zip(sorted(prop.predecessors(prop.get_roots()[0], feature="follow")),
+                             sorted(prop.get_edges_of_attr("propagate_0").keys(), key=lambda t: t[0])):
+            self.assertEqual(x, u)
 
         prop = NetworkPropagation(g.nodes, g.edges(),
                                   user_actions=["flag"], num_info=1, propagation=1.0,
@@ -115,9 +115,9 @@ class TestProp(unittest.TestCase):
         )
         prop.simulate_propagation()
 
-        for x, (_, v) in zip(sorted(prop.predecessors(prop.get_roots()[0], feature="follow")),
-                             sorted(prop.get_edges_of_attr("propagate_0").keys(), key=lambda t: t[1])):
-            self.assertEqual(x, v)
+        for x, (u, _) in zip(sorted(prop.predecessors(prop.get_roots()[0], feature="follow")),
+                             sorted(prop.get_edges_of_attr("propagate_0").keys(), key=lambda t: t[0])):
+            self.assertEqual(x, u)
 
     def test_prop_default_event_listener(self):
         g = nu.get_scale_free_graph(n=100, seed=42)
