@@ -69,13 +69,6 @@ class NetworkPropagation(nx.DiGraph):
                 )
                 propagation_dict[i] = events
 
-        # Add edges with propagate
-        propagation_dict = propagation_dict or propagation
-        for info, propagation in propagation_dict.items():
-            for t, parent_id, node_id in propagation[1:]:  # [1:]: Exclude ROOT -> ...
-                # Note that we consider that 'propagate' is a consequence of {node_id}'s action.
-                self.add_action(node_id, parent_id, f"propagate_{info}", t)
-
         return propagation_dict
 
     # Magic Methods
@@ -346,3 +339,7 @@ def propagate_default_listener(network_propagation: NetworkPropagation, event: T
 
     # Mark propagate attribute to node
     network_propagation.set_attr_of_node(node_id, attr=propagate_key, val=current_time)
+
+    # Note that we consider that 'propagate' is a consequence of {node_id}'s action.
+    if parent_id != "ROOT":
+        network_propagation.add_action(node_id, parent_id, action_key=propagate_key, value=current_time)

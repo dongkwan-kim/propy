@@ -138,7 +138,11 @@ class TestProp(unittest.TestCase):
     def test_data_loader(self):
         concerned_action_prefixes = ["flag", "propagate"]
         base_action_keys = ["follow"]
-        prop = NetworkPropagation.load("test_num_info_2_nodes_20_edges_45_seed_42.pkl")
+        g = nu.get_scale_free_graph(n=20, seed=42)
+        prop = NetworkPropagation(g.nodes, g.edges(),
+                                  user_actions=["flag"], num_info=2, propagation=0.3,
+                                  is_verbose=False, seed=42)
+        prop.simulate_propagation()
 
         prop.set_info_attr(info=0, attr="is_fake", val=True)
         prop.set_info_attr(info=1, attr="is_fake", val=False)
@@ -164,9 +168,9 @@ class TestProp(unittest.TestCase):
             np.asarray([[[0.0, 1.0],
                          [0.0, 0.0]],
                         [[0.0, 0.0],
-                         [1.0, 0.0]],
-                        [[0.0, 0.0],
-                         [6.0, 0.0]]]),
+                         [0.0, 0.0]],
+                        [[0.0, 6.0],
+                         [0.0, 0.0]]]),
         ))
         self.assertEqual(data_loader.actions, ['follow', 'flag', 'propagate'])
         self.assertTrue(np.array_equal(xs_1, np.asarray([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1]])))
