@@ -1,4 +1,5 @@
 from collections import defaultdict
+from copy import deepcopy
 
 import networkx as nx
 import numpy as np
@@ -303,6 +304,11 @@ class NetworkPropagation(nx.DiGraph):
             return super().predecessors(n)
         else:
             return [p for p, features in self._pred[n].items() if feature in features]
+
+    def copy(self, as_view=False):
+        if as_view:
+            raise NotImplementedError
+        return deepcopy(self)
 
     # Util Methods
 
