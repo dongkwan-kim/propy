@@ -6,23 +6,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def get_scale_free_graph(n, seed, force_save=True, **kwargs) -> nx.DiGraph:
-    path = "scale_free_n{}_{}.gpickle".format(n, kwargs)
+def get_scale_free_graph(n, seed, path=None, force_save=True, **kwargs) -> nx.DiGraph:
+    path = path or "."
+    path_and_file = os.path.join(path, "scale_free_n{}_{}.gpickle".format(n, kwargs))
     if force_save:
         g = nx.DiGraph(nx.scale_free_graph(n=n, seed=seed, **kwargs))
         g.remove_edges_from(nx.selfloop_edges(g))
-        setattr(g, "path", path)
-        nx.write_gpickle(g, path)
+        setattr(g, "path", path_and_file)
+        nx.write_gpickle(g, path_and_file)
         return g
     try:
-        g = nx.read_gpickle(os.path.join(".", path))
-        print("Load: {}".format(path))
+        g = nx.read_gpickle(os.path.join(".", path_and_file))
+        print("Load: {}".format(path_and_file))
     except FileNotFoundError:
         g = nx.DiGraph(nx.scale_free_graph(n=n, seed=seed, **kwargs))
         g.remove_edges_from(nx.selfloop_edges(g))
-        setattr(g, "path", path)
-        nx.write_gpickle(g, os.path.join(".", path))
-        print("Dump: {}".format(path))
+        setattr(g, "path", path_and_file)
+        nx.write_gpickle(g, os.path.join(".", path_and_file))
+        print("Dump: {}".format(path_and_file))
     return g
 
 
