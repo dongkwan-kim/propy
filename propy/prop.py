@@ -312,10 +312,20 @@ class NetworkPropagation(nx.DiGraph):
             roots.append(history[0][-1])  # (t, p, n)
         return roots
 
-    def draw_graph(self):
-        roots = self.get_roots()
-        node_color = nu.get_highlight_node_color(self.nodes, roots)
-        nu.draw_graph(self, node_color=node_color)
+    def draw_graph(self, color_type: str = "root", **kwargs):
+
+        if color_type is "root":
+            roots = self.get_roots()
+            node_color = nu.get_highlight_node_color(self.nodes, roots)
+        elif color_type is "real_value_attr":
+            node_to_attr = self.get_nodes_of_attr(kwargs["attr"])
+            low_color = (255, 0, 0) if "low_color" not in kwargs else kwargs["low_color"]
+            high_color = (0, 0, 255) if "high_color" not in kwargs else kwargs["high_color"]
+            node_color = nu.get_node_color_of_real_value_attr(node_to_attr, low_color, high_color)
+        else:
+            raise ValueError
+
+        nu.draw_graph(self, node_color=node_color, **kwargs)
 
     def get_title(self):
         key_attributes = {

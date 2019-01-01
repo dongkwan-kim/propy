@@ -103,6 +103,27 @@ def get_highlight_node_color(all_nodes, highlight_nodes, base_color="grey", high
     return node_color
 
 
+def get_hex_color(rgb_tuple):
+    return "#%02x%02x%02x" % tuple([max(0, min(x, 255)) for x in rgb_tuple])
+
+
+def get_func_two_points(x1, y1, x2, y2) -> Callable:
+    slope = (y2 - y1)/(x2 - x1)
+    return lambda x: (y2 + slope * (x - x2))
+
+
+def get_node_color_of_real_value_attr(node_to_value, low_color, high_color):
+    values = node_to_value.values()
+    min_val, max_val = min(values), max(values)
+    red = get_func_two_points(min_val, low_color[0], max_val, high_color[0])
+    green = get_func_two_points(min_val, low_color[1], max_val, high_color[1])
+    blue = get_func_two_points(min_val, low_color[2], max_val, high_color[2])
+    node_color = []
+    for n, v in node_to_value.items():
+        node_color.append(get_hex_color((int(red(v)), int(green(v)), int(blue(v)))))
+    return node_color
+
+
 def draw_graph(g: nx.DiGraph, **kwargs):
     """
     :param g:
