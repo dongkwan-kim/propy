@@ -52,6 +52,7 @@ class NetworkPropagation(nx.DiGraph):
     def _get_info_to_propagation(self,
                                  num_info: int,
                                  propagation: Dict[int, List[Tuple]] or float,
+                                 min_path_length: int = 1,
                                  max_iter: int = None,
                                  decay_rate: float = 1.0) -> Dict[int, List[Tuple]]:
 
@@ -59,16 +60,24 @@ class NetworkPropagation(nx.DiGraph):
 
         # Generate propagation with probability p if propagation is probability (float)
         if isinstance(propagation, float):
-            roots = nu.sample_propagation_roots(self, num_info, seed=self.seed)
-            for i, root in enumerate(roots):
-                events = nu.get_propagation_events(
-                    self, root,
-                    propagation_prob=propagation,
-                    max_iter=(max_iter or len(self.nodes)),
-                    decay_rate=decay_rate,
-                    seed=(self.seed + i)
-                )
-                propagation_dict[i] = events
+            root_idx = 0
+            while len(propagation_dict) < num_info:
+                roots = nu.sample_propagation_roots(self, num_info, seed=self.seed + root_idx)
+                for root in roots:
+                    events = nu.get_propagation_events(
+                        self, root,
+                        propagation_prob=propagation,
+                        max_iter=(max_iter or len(self.nodes)),
+                        decay_rate=decay_rate,
+                        seed=(self.seed + root_idx)
+                    )
+
+                    if len(events) >= min_path_length:
+                        propagation_dict[root_idx] = events
+                        root_idx += 1
+
+                    if len(propagation_dict) >= num_info:
+                        break
 
         return propagation_dict
 
