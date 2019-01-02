@@ -66,7 +66,7 @@ class NetworkPropagation(nx.DiGraph):
                     propagation_prob=propagation,
                     max_iter=(max_iter or len(self.nodes)),
                     decay_rate=decay_rate,
-                    seed=self.seed
+                    seed=(self.seed + i)
                 )
                 propagation_dict[i] = events
 
