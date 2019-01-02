@@ -99,7 +99,7 @@ class NetworkPropagation(nx.DiGraph):
             action_matrix = np.multiply(action_matrix, action_matrix <= time_stamp)
 
         if is_binary_repr:
-            return (action_matrix != 0).astype(int)
+            return nu.to_binary_repr(action_matrix)
         else:
             return action_matrix
 

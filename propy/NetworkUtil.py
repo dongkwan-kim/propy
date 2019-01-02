@@ -148,6 +148,10 @@ def get_matrix_of_selected_nodes(matrix, selected_indices):
     return matrix[selected_indices][:, selected_indices]
 
 
+def to_binary_repr(matrix):
+    return (matrix != 0).astype(int)
+
+
 # Overrides NetworkX methods
 
 def to_numpy_matrix(G, nodelist=None, dtype=None, order=None,
