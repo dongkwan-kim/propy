@@ -90,16 +90,16 @@ class ActionMatrixLoader:
     def update_ys(self, ys):
         self.ys = assign_or_concat(self.ys, ys)
 
-    def dump(self, name_prefix, num_dist=1):
+    def dump(self, name_prefix, num_subfiles=1):
 
         assert self.matrices_in_list_form is not None
         assert len(self.matrices_in_list_form) == len(self.ys)
 
         # Dump xs, ys
-        info_batch_size = int(math.ceil(len(self)/num_dist))
-        x_batch_size = int(math.ceil(len(self.x_features)/num_dist))
+        info_batch_size = int(math.ceil(len(self) / num_subfiles))
+        x_batch_size = int(math.ceil(len(self.x_features) / num_subfiles))
 
-        for i in range(num_dist):
+        for i in range(num_subfiles):
 
             info_start, info_end = (i*info_batch_size, (i+1)*info_batch_size)
             x_start, x_end = (i*x_batch_size, (i+1)*x_batch_size)
@@ -114,7 +114,7 @@ class ActionMatrixLoader:
             instance_to_dump.update_ys(self.ys[info_start:info_end])
             dump_batch(instance=instance_to_dump, path=self.path, name="{}_{}.pkl".format(name_prefix, i))
 
-        cprint("Dump: {} with dist {}".format(name_prefix, num_dist), "blue")
+        cprint("Dump: {} with num_subfiles {}".format(name_prefix, num_subfiles), "blue")
 
     def load(self, name_prefix):
         # Load xs, ys
