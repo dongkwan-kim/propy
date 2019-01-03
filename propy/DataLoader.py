@@ -27,7 +27,8 @@ def assign_or_concat(base_sequence, extra_sequence):
 
 class ActionMatrixLoader:
 
-    __slots__ = ["path", "actions", "matrices_in_list_form", "selected_node_indices", "x_features", "ys", "adj"]
+    __slots__ = ["path", "actions", "matrices_in_list_form", "selected_node_indices", "x_features", "ys",
+                 "num_features", "num_classes"]
 
     def __init__(self, path: str, actions: list, path_exist_ok=True):
 
@@ -35,6 +36,10 @@ class ActionMatrixLoader:
         os.makedirs(self.path, exist_ok=path_exist_ok)
 
         self.actions: list = actions
+
+        # Meta information
+        self.num_features = None
+        self.num_classes = None
 
         # (num_info, num_actions, 3), 3 = [i, j, val]
         self.matrices_in_list_form: list = None
@@ -85,9 +90,13 @@ class ActionMatrixLoader:
         self.selected_node_indices = assign_or_concat(self.selected_node_indices, selected_node_indices)
 
     def update_x_features(self, x_features):
+        if self.x_features is None:
+            self.num_features = x_features[0].shape[0]
         self.x_features = assign_or_concat(self.x_features, x_features)
 
     def update_ys(self, ys):
+        if self.ys is None:
+            self.num_classes = ys[0].shape[0]
         self.ys = assign_or_concat(self.ys, ys)
 
     def dump(self, name_prefix, num_subfiles=1):
