@@ -137,7 +137,7 @@ class TestProp(unittest.TestCase):
                 self.assertEqual(t, 1)
 
     def test_data_loader(self):
-        concerned_action_prefixes = ["flag", "propagate"]
+        concerned_action_prefixes = ["propagate"]
         base_action_keys = ["follow"]
         g = nu.get_scale_free_graph(n=20, seed=42)
         prop = NetworkPropagation(g.nodes, g.edges(),
@@ -166,26 +166,10 @@ class TestProp(unittest.TestCase):
         mats_1, xs_1, ys_1 = data_loader[1]
         self.assertTrue(np.array_equal(
             mats_1[0],
-            np.asarray([[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]])
+            np.asarray([[0], [1]])
         ))
-        self.assertEqual(data_loader.actions, ['follow', 'flag', 'propagate'])
-        self.assertEqual(xs_1.shape, (17, 5))
+        self.assertEqual(data_loader.actions, ['follow', 'propagate'])
+        self.assertEqual(xs_1.shape, (2, 5))
         self.assertTrue(np.array_equal(ys_1, np.asarray([0, 1])))
 
 

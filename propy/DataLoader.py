@@ -28,9 +28,9 @@ def assign_or_concat(base_sequence, extra_sequence):
 class ActionMatrixLoader:
 
     __slots__ = ["path", "actions", "matrices_in_list_form", "selected_node_indices", "x_features", "ys",
-                 "num_features", "num_classes"]
+                 "num_features", "num_classes", "is_coo_repr", "is_binary_repr"]
 
-    def __init__(self, path: str, actions: list, path_exist_ok=True):
+    def __init__(self, path: str, actions: list, is_coo_repr=True, path_exist_ok=True):
 
         self.path: str = path
         os.makedirs(self.path, exist_ok=path_exist_ok)
@@ -40,6 +40,7 @@ class ActionMatrixLoader:
         # Meta information
         self.num_features = None
         self.num_classes = None
+        self.is_coo_repr = is_coo_repr
 
         # (num_info, num_actions, 3), 3 = [i, j, val]
         self.matrices_in_list_form: list = None
@@ -57,17 +58,29 @@ class ActionMatrixLoader:
         assert len(self.matrices_in_list_form) == len(self.ys)
         return len(self.matrices_in_list_form)
 
-    def __getitem__(self, item) -> (np.ndarray, np.ndarray, np.ndarray):
+    def __getitem__(self, item) -> Tuple:
         """
         :param item: id (int) of info
-        :return: shape of 0: (num_actions, num_selected_nodes, num_selected_nodes),
-                 shape of 1: (num_selected_nodes, num_features),
-                 shape of 2: (num_classes,)
+        :return: tuple of length 3
+        if is_coo_repr:
+            shape of 0: (num_actions, 2, num_selected_edges),
+            shape of 1: (num_selected_nodes, num_features),
+            shape of 2: (num_classes,)
+        else:
+            shape of 0: (num_actions, num_selected_nodes, num_selected_nodes),
+            shape of 1: (num_selected_nodes, num_features),
+            shape of 2: (num_classes,)
         TODO: Support slice as an item.
+        TODO: Support not is_binary_repr for is_coo_repr & is_binary_repr for not is_coo_repr
         """
         indices = self.selected_node_indices[item]
-        matrices = np.asarray([list_to_matrix(lst, size=len(indices)) for lst in self.matrices_in_list_form[item]])
-        return matrices, self.x_features[indices], self.ys[item]
+        if self.is_coo_repr:
+            matrices_in_list_form = self.matrices_in_list_form[item]
+            matrices_coo = [list_to_coo(lst) for lst in matrices_in_list_form]
+            return matrices_coo, self.x_features[indices], self.ys[item]
+        else:
+            matrices = np.asarray([list_to_matrix(lst, size=len(indices)) for lst in self.matrices_in_list_form[item]])
+            return matrices, self.x_features[indices], self.ys[item]
 
     def get_batch_generator(self, batch_size) -> Generator:
         data = []

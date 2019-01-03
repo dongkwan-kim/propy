@@ -19,3 +19,24 @@ def list_to_matrix(lst, size, default_value=0):
     for i, j, val in lst:
         matrix[i][j] = val
     return matrix
+
+
+def list_to_coo(lst) -> np.ndarray:
+    """
+    :param lst: list of [u, v, val]
+    :return: ndarray of shape (2, num_edges)
+    """
+    if len(lst) == 0:
+        return np.asarray([[], []])
+    else:
+        arr = np.asarray(lst)
+        coo = np.transpose(arr[:, :2])
+        return coo.astype(np.int)
+
+
+def list_to_edge_attr(lst) -> np.ndarray:
+    """
+    :param lst: list of [u, v, val]
+    :return: ndarray of shape (num_edges,)
+    """
+    return np.asarray([val for (_, _, val) in lst])
