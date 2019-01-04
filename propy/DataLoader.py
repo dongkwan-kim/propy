@@ -83,12 +83,14 @@ class ActionMatrixLoader:
             return matrices, self.x_features[indices], self.ys[item]
 
     def get_batch_generator(self, batch_size) -> Generator:
-        data = []
-        for i, datum in enumerate(self):
-            data.append(datum)
+        data_m, data_x, data_y = [], [], []
+        for i, (m, x, y) in enumerate(self):
+            data_m.append(m)
+            data_x.append(x)
+            data_y.append(y)
             if (i + 1) % batch_size == 0:
-                yield data
-                data = []
+                yield data_m, data_x, data_y
+                data_m, data_x, data_y = [], [], []
 
     def update_matrices_and_indices(self, matrices_sequence, selected_node_indices, convert_to_list=True):
 
