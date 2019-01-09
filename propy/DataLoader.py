@@ -132,6 +132,20 @@ class ActionMatrixLoader:
             self.num_features = x_features[0].shape[0]
         self.x_features = assign_or_concat(self.x_features, x_features)
 
+    def dynamic_update_x_features(self, update_func: Callable, **kwargs):
+        """
+        :param update_func: function that takes
+                            *("matrices_in_list_form", "selected_node_indices", "x_features") & **kwargs
+        """
+        prev_shape = self.x_features.shape
+        self.x_features = update_func(
+            matrices_in_list_form=self.matrices_in_list_form,
+            selected_node_indices=self.selected_node_indices,
+            x_features=self.x_features,
+            **kwargs,
+        )
+        assert prev_shape == self.x_features.shape
+
     def update_ys(self, ys):
         if self.ys is None:
             self.num_classes = ys[0].shape[0]
