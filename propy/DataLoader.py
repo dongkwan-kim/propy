@@ -82,15 +82,38 @@ class ActionMatrixLoader:
             matrices = np.asarray([list_to_matrix(lst, size=len(indices)) for lst in self.matrices_in_list_form[item]])
             return matrices, self.x_features[indices], self.ys[item]
 
-    def get_batch_generator(self, batch_size) -> Generator:
+    def get_batch_generator(self, batch_size=None,
+                            shuffle=False, seed=None,
+                            is_train=None, train_ratio=0.8) -> Generator:
+
         data_m, data_x, data_y = [], [], []
-        for i, (m, x, y) in enumerate(self):
+
+        indexes = np.asarray(range(len(self)))
+
+        if shuffle:
+            np.random.seed(seed)
+            np.random.shuffle(indexes)
+
+        if is_train is not None:
+            train_idx = int(len(self) * train_ratio)
+            if is_train:
+                indexes = indexes[:train_idx]
+            else:
+                indexes = indexes[train_idx:]
+
+        for i, idx in enumerate(indexes):
+
+            m, x, y = self[idx]
+
             data_m.append(m)
             data_x.append(x)
             data_y.append(y)
-            if (i + 1) % batch_size == 0:
+
+            if batch_size and (i + 1) % batch_size == 0:
                 yield data_m, data_x, data_y
                 data_m, data_x, data_y = [], [], []
+
+        yield data_m, data_x, data_y
 
     def update_matrices_and_indices(self, matrices_sequence, selected_node_indices, convert_to_list=True):
 
