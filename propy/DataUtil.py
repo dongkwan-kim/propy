@@ -5,6 +5,10 @@ def ones_feature(num_nodes, num_features):
     return np.ones(shape=(num_nodes, num_features))
 
 
+def uniform_feature(num_nodes, num_features):
+    return np.full(shape=(num_nodes, num_features), fill_value=(1/num_features))
+
+
 def matrix_to_list(matrix, default_value=0):
     lst = []
     for i, row in enumerate(matrix):
