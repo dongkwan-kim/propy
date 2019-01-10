@@ -126,7 +126,8 @@ class ActionMatrixLoader:
                 yield (data_m, data_xf, data_yf, data_y) if self.y_features is not None else (data_m, data_xf, data_y)
                 data_m, data_xf, data_yf, data_y = [], [], [], []
 
-        yield (data_m, data_xf, data_yf, data_y) if self.y_features is not None else (data_m, data_xf, data_y)
+        if len(data_m) != 0:
+            yield (data_m, data_xf, data_yf, data_y) if self.y_features is not None else (data_m, data_xf, data_y)
 
     def update_matrices_and_indices(self, matrices_sequence, selected_node_indices, convert_to_list=True):
 
