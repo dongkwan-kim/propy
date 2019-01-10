@@ -27,8 +27,8 @@ def assign_or_concat(base_sequence, extra_sequence):
 
 class ActionMatrixLoader:
 
-    __slots__ = ["path", "actions", "matrices_in_list_form", "selected_node_indices", "x_features", "ys",
-                 "num_features", "num_classes", "is_coo_repr", "is_binary_repr"]
+    __slots__ = ["path", "actions", "matrices_in_list_form", "selected_node_indices", "x_features", "y_features", "ys",
+                 "num_x_features", "num_y_features", "num_classes", "is_coo_repr", "is_binary_repr"]
 
     def __init__(self, path: str, actions: list, is_coo_repr=True, path_exist_ok=True):
 
@@ -38,7 +38,8 @@ class ActionMatrixLoader:
         self.actions: list = actions
 
         # Meta information
-        self.num_features = None
+        self.num_x_features = None
+        self.num_y_features = None
         self.num_classes = None
         self.is_coo_repr = is_coo_repr
 
@@ -51,6 +52,9 @@ class ActionMatrixLoader:
         # (num_nodes, num_features)
         self.x_features: np.ndarray = None
 
+        # (num_info, num_y_features)
+        self.y_features: np.ndarray = None
+
         # (num_info, num_classes)
         self.ys: np.ndarray = None
 
@@ -61,32 +65,37 @@ class ActionMatrixLoader:
     def __getitem__(self, item) -> Tuple:
         """
         :param item: id (int) of info
-        :return: tuple of length 3
+        :return: tuple of length 3 or 4
         if is_coo_repr:
             shape of 0: (num_actions, 2, num_selected_edges),
-            shape of 1: (num_selected_nodes, num_features),
-            shape of 2: (num_classes,)
+            shape of 1: (num_selected_nodes, num_x_features),
+            shape of 2: (num_selected_nodes, num_y_features) if self.y_features is not None,
+            shape of -1: (num_classes,)
         else:
             shape of 0: (num_actions, num_selected_nodes, num_selected_nodes),
-            shape of 1: (num_selected_nodes, num_features),
-            shape of 2: (num_classes,)
+            shape of 1: (num_selected_nodes, num_x_features),
+            shape of 2: (num_selected_nodes, num_y_features) if self.y_features is not None
+            shape of -1: (num_classes,)
         TODO: Support slice as an item.
         TODO: Support not is_binary_repr for is_coo_repr & is_binary_repr for not is_coo_repr
         """
         indices = self.selected_node_indices[item]
         if self.is_coo_repr:
             matrices_in_list_form = self.matrices_in_list_form[item]
-            matrices_coo = [list_to_coo(lst) for lst in matrices_in_list_form]
-            return matrices_coo, self.x_features[indices], self.ys[item]
+            matrices = [list_to_coo(lst) for lst in matrices_in_list_form]
         else:
             matrices = np.asarray([list_to_matrix(lst, size=len(indices)) for lst in self.matrices_in_list_form[item]])
+
+        if self.y_features is not None:
+            return matrices, self.x_features[indices], self.y_features[item], self.ys[item]
+        else:
             return matrices, self.x_features[indices], self.ys[item]
 
     def get_batch_generator(self, batch_size=None,
                             shuffle=False, seed=None,
                             is_train=None, train_ratio=0.8) -> Generator:
 
-        data_m, data_x, data_y = [], [], []
+        data_m, data_xf, data_yf, data_y = [], [], [], []
 
         indexes = np.asarray(range(len(self)))
 
@@ -103,17 +112,21 @@ class ActionMatrixLoader:
 
         for i, idx in enumerate(indexes):
 
-            m, x, y = self[idx]
+            if self.y_features is not None:
+                m, xf, yf, y = self[idx]
+                data_yf.append(yf)
+            else:
+                m, xf, y = self[idx]
 
             data_m.append(m)
-            data_x.append(x)
+            data_xf.append(xf)
             data_y.append(y)
 
             if batch_size and (i + 1) % batch_size == 0:
-                yield data_m, data_x, data_y
-                data_m, data_x, data_y = [], [], []
+                yield (data_m, data_xf, data_yf, data_y) if self.y_features is not None else (data_m, data_xf, data_y)
+                data_m, data_xf, data_yf, data_y = [], [], [], []
 
-        yield data_m, data_x, data_y
+        yield (data_m, data_xf, data_yf, data_y) if self.y_features is not None else (data_m, data_xf, data_y)
 
     def update_matrices_and_indices(self, matrices_sequence, selected_node_indices, convert_to_list=True):
 
@@ -129,22 +142,29 @@ class ActionMatrixLoader:
 
     def update_x_features(self, x_features):
         if self.x_features is None:
-            self.num_features = x_features[0].shape[0]
+            self.num_x_features = x_features[0].shape[0]
         self.x_features = assign_or_concat(self.x_features, x_features)
 
     def dynamic_update_x_features(self, update_func: Callable, **kwargs):
         """
         :param update_func: function that takes
-                            *("matrices_in_list_form", "selected_node_indices", "x_features") & **kwargs
+                            *(matrices_in_list_form, selected_node_indices, x_features, y_features)
+                             & **kwargs
         """
         prev_shape = self.x_features.shape
         self.x_features = update_func(
             matrices_in_list_form=self.matrices_in_list_form,
             selected_node_indices=self.selected_node_indices,
             x_features=self.x_features,
+            y_features=self.y_features,
             **kwargs,
         )
         assert prev_shape == self.x_features.shape
+
+    def update_y_features(self, y_features):
+        if self.y_features is None:
+            self.num_y_features = y_features[0].shape[0]
+        self.y_features = assign_or_concat(self.y_features, y_features)
 
     def update_ys(self, ys):
         if self.ys is None:
@@ -173,6 +193,8 @@ class ActionMatrixLoader:
             )
             instance_to_dump.update_x_features(self.x_features[x_start:x_end])
             instance_to_dump.update_ys(self.ys[info_start:info_end])
+            if self.y_features is not None:
+                instance_to_dump.update_y_features(self.y_features[info_start:info_end])
             dump_batch(instance=instance_to_dump, path=self.path, name="{}_{}.pkl".format(name_prefix, i))
 
         cprint("Dump: {} with num_subfiles {}".format(name_prefix, num_subfiles), "blue")
@@ -199,6 +221,7 @@ class ActionMatrixLoader:
                 self.matrices_in_list_form = assign_or_concat(self.matrices_in_list_form, loaded.matrices_in_list_form)
                 self.selected_node_indices = assign_or_concat(self.selected_node_indices, loaded.selected_node_indices)
                 self.x_features = assign_or_concat(self.x_features, loaded.x_features)
+                self.y_features = assign_or_concat(self.y_features, loaded.y_features)
                 self.ys = assign_or_concat(self.ys, loaded.ys)
             return True
         except Exception as e:
