@@ -79,7 +79,7 @@ class NetworkPropagation(nx.DiGraph):
                     if len(propagation_dict) >= num_info:
                         break
 
-        return propagation_dict
+        return propagation_dict or propagation
 
     # Magic Methods
 
