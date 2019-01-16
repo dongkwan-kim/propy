@@ -94,16 +94,19 @@ class NetworkPropagation(nx.DiGraph):
 
     # Data Methods
 
-    def get_action_matrix(self, action_key: str, time_stamp: int or float = None, is_binary_repr=False) -> np.ndarray:
+    def get_action_matrix(self, action_key: str,
+                          time_stamp: int or float = None, is_binary_repr=False, nodelist: list = None) -> np.ndarray:
         """
         :param action_key: str in self.user_actions
         :param time_stamp: Remove actions time of which is greater than time_stamp
         :param is_binary_repr: convert all positive integers to one
+        :param nodelist: The rows and columns are ordered according to the nodes in nodelist.
         :return:
         """
         assert action_key in self.user_actions
 
-        action_matrix = nu.to_numpy_matrix(self, weight=action_key, value_for_non_weight_exist=0)
+        action_matrix = nu.to_numpy_matrix(self, nodelist=nodelist, weight=action_key, value_for_non_weight_exist=0)
+
         if time_stamp is not None:
             action_matrix = np.multiply(action_matrix, action_matrix <= time_stamp)
 
@@ -141,12 +144,12 @@ class NetworkPropagation(nx.DiGraph):
 
         action_matrices = []
         for base_action_key in base_action_keys:
-            action_matrix = self.get_action_matrix(base_action_key, time_stamp, is_binary_repr)
-            action_matrices.append(nu.get_matrix_of_selected_nodes(action_matrix, concerned_indices))
+            action_matrix = self.get_action_matrix(base_action_key, time_stamp, is_binary_repr, concerned_nodes)
+            action_matrices.append(action_matrix)
 
         for concerned_action_key in concerned_action_keys:
-            action_matrix = self.get_action_matrix(concerned_action_key, time_stamp, is_binary_repr)
-            action_matrices.append(nu.get_matrix_of_selected_nodes(action_matrix, concerned_indices))
+            action_matrix = self.get_action_matrix(concerned_action_key, time_stamp, is_binary_repr, concerned_nodes)
+            action_matrices.append(action_matrix)
 
         return np.asarray(action_matrices), np.asarray(concerned_indices)
 
