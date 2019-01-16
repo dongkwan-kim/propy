@@ -33,20 +33,21 @@ class NetworkPropagation(nx.DiGraph):
         self.num_info = num_info
         self.is_verbose = is_verbose
 
+        self.info_to_propagation: Dict[int, List[Tuple]] = self._get_info_to_propagation(num_info, propagation,
+                                                                                         **(propagation_kwargs or {}))
+        self.info_to_attributes: Dict[int, Dict] = {info: {} for info in self.info_to_propagation.keys()}
+
         self.user_actions, user_actions = [], user_actions if user_actions else []
         self.user_actions.append("follow")
         self._append_user_actions_with_info("propagate")
         for action_key in user_actions:
             self._append_user_actions_with_info(action_key)
 
-        self.info_to_propagation: Dict[int, List[Tuple]] = self._get_info_to_propagation(num_info, propagation,
-                                                                                         **(propagation_kwargs or {}))
-        self.info_to_attributes: Dict[int, Dict] = {info: {} for info in self.info_to_propagation.keys()}
         self.event_listeners = defaultdict(list)
         self.add_event_listener(event_type="propagate", callback_func=propagate_default_listener)
 
     def _append_user_actions_with_info(self, action_key):
-        for info in range(self.num_info):
+        for info in self.info_to_propagation.keys():
             self.user_actions.append("{}_{}".format(action_key, info))
 
     def _get_info_to_propagation(self,
