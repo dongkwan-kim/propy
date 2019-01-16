@@ -6,6 +6,8 @@ import math
 from propy.prop import *
 from propy.DataUtil import *
 
+from sklearn.model_selection import KFold
+
 
 def dump_batch(instance, path, name):
     with open(os.path.join(path, name), 'wb') as f:
@@ -93,7 +95,7 @@ class ActionMatrixLoader:
 
     def get_batch_generator(self, batch_size=None,
                             shuffle=False, seed=None,
-                            is_train=None, train_ratio=0.8) -> Generator:
+                            is_train=None, train_ratio=0.8, fold=0) -> Generator:
 
         data_m, data_xf, data_yf, data_y = [], [], [], []
 
@@ -104,11 +106,17 @@ class ActionMatrixLoader:
             np.random.shuffle(indexes)
 
         if is_train is not None:
-            train_idx = int(len(self) * train_ratio)
-            if is_train:
-                indexes = indexes[:train_idx]
-            else:
-                indexes = indexes[train_idx:]
+            kf = KFold(n_splits=int(1/(1-train_ratio)), random_state=seed, shuffle=shuffle)
+            assert kf.get_n_splits() > fold
+            for i, (train_idx, test_idx) in enumerate(kf.split(indexes)):
+
+                if i != fold:
+                    continue
+
+                if is_train:
+                    indexes = indexes[train_idx]
+                else:
+                    indexes = indexes[test_idx]
 
         for i, idx in enumerate(indexes):
 
