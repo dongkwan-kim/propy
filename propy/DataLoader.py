@@ -120,6 +120,9 @@ class ActionMatrixLoader:
 
         for i, idx in enumerate(indexes):
 
+            if len(self.selected_node_indices[idx]) <= 0:
+                continue
+
             if self.y_features is not None:
                 m, xf, yf, y = self[idx]
                 data_yf.append(yf)
@@ -130,7 +133,7 @@ class ActionMatrixLoader:
             data_xf.append(xf)
             data_y.append(y)
 
-            if batch_size and (i + 1) % batch_size == 0:
+            if batch_size and len(data_y) % batch_size == 0:
                 yield (data_m, data_xf, data_yf, data_y) if self.y_features is not None else (data_m, data_xf, data_y)
                 data_m, data_xf, data_yf, data_y = [], [], [], []
 
