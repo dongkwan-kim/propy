@@ -143,8 +143,7 @@ class NetworkPropagation(nx.DiGraph):
         ordered_full_nodes = np.asarray(self.nodes())
         concerned_nodes = set()
         for concerned_action_key in concerned_action_keys:
-            for u, v in self.get_edges_of_attr(concerned_action_key):
-                concerned_nodes.update((u, v))
+            concerned_nodes.update(self.get_nodes_of_attr(concerned_action_key).keys())
         concerned_nodes = sorted(concerned_nodes)
 
         concerned_indices = [np.where(ordered_full_nodes == node)[0][0] for node in concerned_nodes]
