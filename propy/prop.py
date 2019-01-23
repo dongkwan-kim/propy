@@ -95,6 +95,12 @@ class NetworkPropagation(nx.DiGraph):
 
     # Data Methods
 
+    def get_actions(self):
+        return self.user_actions
+
+    def get_specific_actions(self, key):
+        return [a for a in self.user_actions if key in a]
+
     def get_action_matrix(self, action_key: str,
                           time_stamp: int or float = None, is_binary_repr=False, nodelist: list = None) -> np.ndarray:
         """
