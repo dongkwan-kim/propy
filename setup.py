@@ -25,7 +25,7 @@ setup(
     long_description=readme,
     author='Dongkwan Kim',
     author_email='todoaskit@gmail.com',
-    url='https://github.com/todoaskit/propy',
+    url='https://github.com/dongkwan-kim/propy',
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
