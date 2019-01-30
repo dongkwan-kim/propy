@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.preprocessing import normalize
 
 
 def ones_feature(num_nodes, num_features):
@@ -7,6 +8,14 @@ def ones_feature(num_nodes, num_features):
 
 def uniform_feature(num_nodes, num_features):
     return np.full(shape=(num_nodes, num_features), fill_value=(1/num_features))
+
+
+def random_feature(num_nodes, num_features, is_normalized=True):
+    features = np.random.random((num_nodes, num_features))
+    if is_normalized:
+        return normalize(features, norm='l1')
+    else:
+        return features
 
 
 def matrix_to_list(matrix, default_value=0):
