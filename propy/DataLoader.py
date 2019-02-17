@@ -30,9 +30,9 @@ def assign_or_concat(base_sequence, extra_sequence):
 class ActionMatrixLoader:
 
     __slots__ = ["path", "actions", "edge_indices_list", "selected_node_indices", "x_features", "y_features", "ys",
-                 "num_x_features", "num_y_features", "num_classes", "is_coo_repr", "is_binary_repr"]
+                 "num_x_features", "num_y_features", "num_classes", "is_coo_repr", "is_x_indices_repr"]
 
-    def __init__(self, path: str, actions: list, is_coo_repr=True, path_exist_ok=True):
+    def __init__(self, path: str, actions: list, is_coo_repr=True, is_x_indices_repr=False, path_exist_ok=True):
 
         self.path: str = path
         os.makedirs(self.path, exist_ok=path_exist_ok)
@@ -44,6 +44,7 @@ class ActionMatrixLoader:
         self.num_y_features = None
         self.num_classes = None
         self.is_coo_repr = is_coo_repr
+        self.is_x_indices_repr = is_x_indices_repr
 
         # (num_info, num_actions, num_edges, 3:[i, j, val])
         self.edge_indices_list: List[List[np.ndarray]] = None
@@ -70,14 +71,24 @@ class ActionMatrixLoader:
         :return: tuple of length 3 or 4
         if is_coo_repr:
             shape of 0: (num_actions, 2, num_selected_edges),
-            shape of 1: (num_selected_nodes, num_x_features),
+            shape of 1: See is_x_indices_repr,
             shape of 2: (num_selected_nodes, num_y_features) if self.y_features is not None,
             shape of -1: (num_classes,)
         else:
             shape of 0: (num_actions, num_selected_nodes, num_selected_nodes),
-            shape of 1: (num_selected_nodes, num_x_features),
+            shape of 1: See is_x_indices_repr,
             shape of 2: (num_selected_nodes, num_y_features) if self.y_features is not None
             shape of -1: (num_classes,)
+
+        if is_x_indices_repr:
+            shape of 1: (num_selected_nodes,)
+        else:
+            shape of 1: (num_selected_nodes, num_x_features)
+
+        Note that
+            values of <shape of 0> are indices of <shape of 1>
+            values of <shape of 1 if is_x_indices_repr> are node_indices (not node_ids)
+
         TODO: Support slice as an item.
         TODO: Support not is_binary_repr for is_coo_repr & is_binary_repr for not is_coo_repr
         """
@@ -88,14 +99,23 @@ class ActionMatrixLoader:
         else:
             matrices = [list_to_matrix(lst, size=len(indices)) for lst in self.edge_indices_list[item]]
 
-        if self.y_features is not None:
-            return matrices, self.x_features[indices], self.y_features[item], self.ys[item]
+        if self.is_x_indices_repr:
+            x_features_or_indices = indices
         else:
-            return matrices, self.x_features[indices], self.ys[item]
+            x_features_or_indices = self.x_features[indices]
 
-    def get_batch_generator(self, batch_size=None,
-                            shuffle=False, seed=None,
-                            is_train=None, train_ratio=0.8, fold=0) -> Generator:
+        if self.y_features is not None:
+            return matrices, x_features_or_indices, self.y_features[item], self.ys[item]
+        else:
+            return matrices, x_features_or_indices, self.ys[item]
+
+    def get_batch_generator(self,
+                            batch_size=None,
+                            shuffle=False,
+                            seed=None,
+                            is_train=None,
+                            train_ratio=0.8,
+                            fold=0) -> Generator:
 
         data_m, data_xf, data_yf, data_y = [], [], [], []
 
